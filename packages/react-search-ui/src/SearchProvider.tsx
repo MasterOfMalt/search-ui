@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 
 import { SearchDriver } from "@elastic/search-ui";
 import SearchContext from "./SearchContext";
@@ -41,8 +41,8 @@ const SearchProvider = ({
           ...config.a11yNotificationMessages
         }
       });
-    setDriverInstance(currentDriver);
     setInitialised(true);
+    setDriverInstance(currentDriver);
 
     return () => {
       currentDriver.tearDown();
