@@ -131,6 +131,7 @@ export type SearchDriverOptions = {
   hasA11yNotifications?: boolean;
   a11yNotificationMessages?: Record<string, unknown>;
   alwaysSearchOnInitialLoad?: boolean;
+  initialResponseState?: Partial<ResponseState>;
 };
 
 export type SubscriptionHandler = (state: SearchState) => void;
@@ -183,7 +184,8 @@ class SearchDriver {
     urlPushDebounceLength = 500,
     hasA11yNotifications = false,
     a11yNotificationMessages = {},
-    alwaysSearchOnInitialLoad = false
+    alwaysSearchOnInitialLoad = false,
+    initialResponseState = null
   }: SearchDriverOptions) {
     this.actions = Object.entries(actions).reduce(
       (acc, [actionName, action]) => {
@@ -277,13 +279,38 @@ class SearchDriver {
       ...searchParameters
     };
 
+    if (initialResponseState) {
+      const { current, resultsPerPage } = this.state;
+
+      const { totalResults } = initialResponseState;
+
+      // Results paging start & end
+      const start = totalResults === 0 ? 0 : (current - 1) * resultsPerPage + 1;
+
+      const end =
+        totalResults < start + resultsPerPage
+          ? totalResults
+          : start + resultsPerPage - 1;
+
+      this.state = {
+        ...this.state,
+        ...{
+          pagingStart: start,
+          pagingEnd: end,
+          wasSearched: true,
+          ...initialResponseState
+        }
+      };
+    }
+
     // We'll trigger an initial search if initial parameters contain
     // a search term or filters, or if alwaysSearchOnInitialLoad is set.
     // Otherwise, we'll just save their selections in state as initial values.
     if (
-      searchParameters.searchTerm ||
-      searchParameters.filters.length > 0 ||
-      this.alwaysSearchOnInitialLoad
+      (searchParameters.searchTerm ||
+        searchParameters.filters.length > 0 ||
+        this.alwaysSearchOnInitialLoad) &&
+      !initialResponseState
     ) {
       this._updateSearchResults(searchParameters, { replaceUrl: true });
     }
