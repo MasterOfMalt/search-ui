@@ -18,6 +18,7 @@ type ConnectionOptions = {
   apiKey?: string;
   connectionOptions?: {
     headers?: Record<string, string>;
+    fetchClientTransporter?: any;
   };
 };
 
@@ -51,7 +52,9 @@ class ElasticsearchAPIConnector implements APIConnector {
       index: this.config.index,
       connectionOptions: {
         apiKey: this.config.apiKey,
-        headers: this.config.connectionOptions?.headers
+        headers: this.config.connectionOptions?.headers,
+        fetchClientTransporter:
+          this.config.connectionOptions?.fetchClientTransporter
       },
       postProcessRequestBodyFn: this.postProcessRequestBodyFn
     });
