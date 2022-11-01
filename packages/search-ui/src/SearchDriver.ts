@@ -270,14 +270,7 @@ class SearchDriver {
       ...urlState
     });
 
-    // Initialize the state without calling _setState, because we don't
-    // want to trigger an update callback, we're just initializing the state
-    // to the correct default values for the initial UI render
-    this.state = {
-      ...this.state,
-      ...(apiConnector?.state && { ...apiConnector.state }),
-      ...searchParameters
-    };
+    let responseState = {};
 
     if (initialResponseState) {
       const { current, resultsPerPage } = this.state;
@@ -292,19 +285,27 @@ class SearchDriver {
           ? totalResults
           : start + resultsPerPage - 1;
 
-      this.state = {
-        ...this.state,
-        ...{
-          pagingStart: start,
-          pagingEnd: end,
-          wasSearched: true,
-          ...initialResponseState
-        }
+      responseState = {
+        pagingStart: start,
+        pagingEnd: end,
+        wasSearched: true,
+        ...initialResponseState
       };
     }
 
+    // Initialize the state without calling _setState, because we don't
+    // want to trigger an update callback, we're just initializing the state
+    // to the correct default values for the initial UI render
+    this.state = {
+      ...this.state,
+      ...(apiConnector?.state && { ...apiConnector.state }),
+      ...searchParameters,
+      ...responseState
+    };
+
     // We'll trigger an initial search if initial parameters contain
-    // a search term or filters, or if alwaysSearchOnInitialLoad is set.
+    // a search term or filters or alwaysSearchOnInitialLoad is set, and
+    // the driver wasn't passed an initialResponseState.
     // Otherwise, we'll just save their selections in state as initial values.
     if (
       (searchParameters.searchTerm ||
