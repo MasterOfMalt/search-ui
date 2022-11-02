@@ -131,6 +131,7 @@ export type SearchDriverOptions = {
   hasA11yNotifications?: boolean;
   a11yNotificationMessages?: Record<string, unknown>;
   alwaysSearchOnInitialLoad?: boolean;
+  initialResponseState?: Partial<ResponseState>;
 };
 
 export type SubscriptionHandler = (state: SearchState) => void;
@@ -183,7 +184,8 @@ class SearchDriver {
     urlPushDebounceLength = 500,
     hasA11yNotifications = false,
     a11yNotificationMessages = {},
-    alwaysSearchOnInitialLoad = false
+    alwaysSearchOnInitialLoad = false,
+    initialResponseState = null
   }: SearchDriverOptions) {
     this.actions = Object.entries(actions).reduce(
       (acc, [actionName, action]) => {
@@ -268,22 +270,48 @@ class SearchDriver {
       ...urlState
     });
 
+    let responseState = {};
+
+    if (initialResponseState) {
+      const { current, resultsPerPage } = this.state;
+
+      const { totalResults } = initialResponseState;
+
+      // Results paging start & end
+      const start = totalResults === 0 ? 0 : (current - 1) * resultsPerPage + 1;
+
+      const end =
+        totalResults < start + resultsPerPage
+          ? totalResults
+          : start + resultsPerPage - 1;
+
+      responseState = {
+        pagingStart: start,
+        pagingEnd: end,
+        wasSearched: true,
+        ...initialResponseState
+      };
+    }
+
     // Initialize the state without calling _setState, because we don't
     // want to trigger an update callback, we're just initializing the state
     // to the correct default values for the initial UI render
     this.state = {
       ...this.state,
       ...(apiConnector?.state && { ...apiConnector.state }),
-      ...searchParameters
+      ...searchParameters,
+      ...responseState
     };
 
     // We'll trigger an initial search if initial parameters contain
-    // a search term or filters, or if alwaysSearchOnInitialLoad is set.
+    // a search term or filters or alwaysSearchOnInitialLoad is set, and
+    // the driver wasn't passed an initialResponseState.
     // Otherwise, we'll just save their selections in state as initial values.
     if (
-      searchParameters.searchTerm ||
-      searchParameters.filters.length > 0 ||
-      this.alwaysSearchOnInitialLoad
+      (searchParameters.searchTerm ||
+        searchParameters.filters.length > 0 ||
+        this.alwaysSearchOnInitialLoad) &&
+      !initialResponseState
     ) {
       this._updateSearchResults(searchParameters, { replaceUrl: true });
     }
