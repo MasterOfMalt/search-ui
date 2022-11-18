@@ -404,7 +404,7 @@ class SearchDriver {
       sortList
     });
 
-    this._makeSearchRequest({
+    this.makeSearchRequest({
       skipPushToUrl,
       replaceUrl
     });
@@ -436,7 +436,7 @@ class SearchDriver {
    * @param {boolean} options.replaceUrl - When pushing state to the URL, use history 'replace'
    * rather than 'push' to avoid adding a new history entry
    */
-  private _makeSearchRequest = DebounceManager.debounce(
+  public makeSearchRequest = DebounceManager.debounce(
     0,
     ({ skipPushToUrl, replaceUrl }) => {
       const {

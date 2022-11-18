@@ -18,6 +18,7 @@ interface SearchHandlerConfiguration {
   connectionOptions?: {
     apiKey?: string;
     headers?: Record<string, string>;
+    getCustomClientTransporter?: any;
   };
   postProcessRequestBodyFn?: PostProcessRequestBodyFn;
 }
@@ -34,7 +35,8 @@ export default async function handleRequest(
     connectionOptions,
     postProcessRequestBodyFn
   } = configuration;
-  const { apiKey, headers } = connectionOptions || {};
+  const { apiKey, headers, getCustomClientTransporter } =
+    connectionOptions || {};
   const searchkitConfig = buildConfiguration({
     state,
     queryConfig,
@@ -46,7 +48,17 @@ export default async function handleRequest(
     postProcessRequestBodyFn
   });
 
-  const request = Searchkit(searchkitConfig);
+  let request;
+
+  if (getCustomClientTransporter) {
+    const fetchClientTransporter = getCustomClientTransporter(
+      searchkitConfig,
+      configuration
+    );
+    request = Searchkit(searchkitConfig, fetchClientTransporter);
+  } else {
+    request = Searchkit(searchkitConfig);
+  }
 
   const searchkitVariables = buildRequest(state, queryConfig);
 
