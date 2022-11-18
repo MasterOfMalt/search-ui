@@ -1,0 +1,142 @@
+{
+  "current": 1,
+  "filters": [
+    {
+      "field": "stocklevel",
+      "values": [1],
+      "type": "all"
+    },
+    {
+      "field": "price",
+      "values": [
+        {
+          "to": 400,
+          "from": 200,
+          "name": "£200.00 – £400.00"
+        }
+      ],
+      "type": "any"
+    },
+    {
+      "field": "userrating",
+      "values": [
+        {
+          "from": 5,
+          "name": "5 ⭐ only"
+        }
+      ],
+      "type": "all"
+    },
+    {
+      "field": "volume",
+      "values": [
+        {
+          "to": 36,
+          "from": 35,
+          "name": "35"
+        },
+        {
+          "to": 51,
+          "from": 50,
+          "name": "50"
+        },
+        {
+          "to": 71,
+          "from": 70,
+          "name": "70"
+        },
+        {
+          "to": 76,
+          "from": 75,
+          "name": "75"
+        },
+        {
+          "to": 101,
+          "from": 100,
+          "name": "100"
+        }
+      ],
+      "type": "any"
+    },
+    {
+      "field": "targettemplate",
+      "values": ["Whiskies", "Gin"],
+      "type": "any"
+    },
+    {
+      "field": "style",
+      "values": ["Single Malt", "Blended Malt", "Cask Aged", "Gin"],
+      "type": "any"
+    },
+    {
+      "field": "distillery",
+      "values": [
+        "Ardbeg",
+        "Douglas Laing",
+        "Agnes Arber",
+        "Batshit Mental Ideas",
+        "Peat's Beast"
+      ],
+      "type": "any"
+    },
+    {
+      "field": "country",
+      "values": ["Scotland", "England"],
+      "type": "any"
+    },
+    {
+      "field": "region",
+      "values": ["Islay"],
+      "type": "any"
+    },
+    {
+      "field": "hasdram",
+      "values": [1],
+      "type": "all"
+    },
+    {
+      "field": "abv",
+      "values": [
+        {
+          "to": 84,
+          "from": 14
+        }
+      ],
+      "type": "all"
+    },
+    {
+      "field": "vintage",
+      "values": [
+        {
+          "to": 1995,
+          "from": 1870
+        }
+      ],
+      "type": "all"
+    },
+    {
+      "field": "bottlingyear",
+      "values": [
+        {
+          "to": 1997,
+          "from": 1871
+        }
+      ],
+      "type": "all"
+    },
+    {
+      "field": "age",
+      "values": [
+        {
+          "to": 85,
+          "from": 12
+        }
+      ],
+      "type": "all"
+    }
+  ],
+  "sort": {
+    "direction": "asc",
+    "field": "title"
+  }
+}
