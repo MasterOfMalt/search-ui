@@ -1,0 +1,10 @@
+function recursive_for_loop { 
+  for f in packages/*;  do 
+    cd `pwd`/$f
+    echo `pwd`
+    npm pack
+    find ./ -name '*.tgz' -exec cp -prv '{}' '/mnt/c/npm' ';'
+    cd ../..
+  done;  
+};
+recursive_for_loop
