@@ -410,6 +410,113 @@ class SearchDriver {
     });
   };
 
+  public rawMakeSearchRequest = ({ skipPushToUrl, replaceUrl }) => {
+    const {
+      current,
+      filters,
+      resultsPerPage,
+      searchTerm,
+      sortDirection,
+      sortField,
+      sortList
+    } = this.state;
+
+    this._setState({
+      isLoading: true
+    });
+
+    const requestId = this.searchRequestSequencer.next();
+
+    const { conditionalFacets, ...restOfSearchQuery } = this.searchQuery;
+
+    const queryConfig = {
+      ...restOfSearchQuery,
+      facets: removeConditionalFacets(
+        this.searchQuery.facets,
+        conditionalFacets,
+        filters
+      )
+    };
+
+    const requestState: RequestState = {
+      ...filterSearchParameters(this.state),
+      filters: mergeFilters(filters, this.searchQuery.filters)
+    };
+
+    return this.events.search(requestState, queryConfig).then(
+      (resultState) => {
+        if (this.searchRequestSequencer.isOldRequest(requestId)) return;
+        this.searchRequestSequencer.completed(requestId);
+        const { totalResults } = resultState;
+
+        this.events.emit({
+          type: "SearchQuery",
+          query: this.state.searchTerm,
+          totalResults: totalResults
+        });
+
+        // Results paging start & end
+        const start =
+          totalResults === 0 ? 0 : (current - 1) * resultsPerPage + 1;
+        const end =
+          totalResults < start + resultsPerPage
+            ? totalResults
+            : start + resultsPerPage - 1;
+
+        this._setState({
+          isLoading: false,
+          resultSearchTerm: searchTerm,
+          pagingStart: start,
+          pagingEnd: end,
+          ...resultState,
+          wasSearched: true
+        });
+
+        if (this.hasA11yNotifications) {
+          const messageArgs = { start, end, totalResults, searchTerm };
+          this.actions.a11yNotify("searchResults", messageArgs);
+        }
+
+        if (!skipPushToUrl && this.trackUrlState) {
+          // We debounce here so that we don't get a lot of intermediary
+          // URL state if someone is updating a UI really fast, like typing
+          // in a live search box for instance.
+          this.debounceManager.runWithDebounce(
+            this.urlPushDebounceLength,
+            "pushStateToURL",
+            this.URLManager.pushStateToURL.bind(this.URLManager),
+            {
+              current,
+              filters,
+              resultsPerPage,
+              searchTerm,
+              sortDirection,
+              sortField,
+              sortList
+            },
+            { replaceUrl }
+          );
+        }
+      },
+      (error) => {
+        if (error.message === INVALID_CREDENTIALS) {
+          // The connector should have invalidated the credentials in its state by now
+          // Getting the latest state from the connector
+          this._setState({
+            ...(this.apiConnector?.state && { ...this.apiConnector.state })
+          });
+          // Stop execution of request
+          // and let the consuming application handle the missing credentials
+          return;
+        }
+
+        this._setState({
+          error: `An unexpected error occurred: ${error.message}`
+        });
+      }
+    );
+  };
+
   /**
    * This method is separated out from _updateSearchResults so that it
    * can be debounced.
@@ -438,112 +545,7 @@ class SearchDriver {
    */
   private _makeSearchRequest = DebounceManager.debounce(
     0,
-    ({ skipPushToUrl, replaceUrl }) => {
-      const {
-        current,
-        filters,
-        resultsPerPage,
-        searchTerm,
-        sortDirection,
-        sortField,
-        sortList
-      } = this.state;
-
-      this._setState({
-        isLoading: true
-      });
-
-      const requestId = this.searchRequestSequencer.next();
-
-      const { conditionalFacets, ...restOfSearchQuery } = this.searchQuery;
-
-      const queryConfig = {
-        ...restOfSearchQuery,
-        facets: removeConditionalFacets(
-          this.searchQuery.facets,
-          conditionalFacets,
-          filters
-        )
-      };
-
-      const requestState: RequestState = {
-        ...filterSearchParameters(this.state),
-        filters: mergeFilters(filters, this.searchQuery.filters)
-      };
-
-      return this.events.search(requestState, queryConfig).then(
-        (resultState) => {
-          if (this.searchRequestSequencer.isOldRequest(requestId)) return;
-          this.searchRequestSequencer.completed(requestId);
-          const { totalResults } = resultState;
-
-          this.events.emit({
-            type: "SearchQuery",
-            query: this.state.searchTerm,
-            totalResults: totalResults
-          });
-
-          // Results paging start & end
-          const start =
-            totalResults === 0 ? 0 : (current - 1) * resultsPerPage + 1;
-          const end =
-            totalResults < start + resultsPerPage
-              ? totalResults
-              : start + resultsPerPage - 1;
-
-          this._setState({
-            isLoading: false,
-            resultSearchTerm: searchTerm,
-            pagingStart: start,
-            pagingEnd: end,
-            ...resultState,
-            wasSearched: true
-          });
-
-          if (this.hasA11yNotifications) {
-            const messageArgs = { start, end, totalResults, searchTerm };
-            this.actions.a11yNotify("searchResults", messageArgs);
-          }
-
-          if (!skipPushToUrl && this.trackUrlState) {
-            // We debounce here so that we don't get a lot of intermediary
-            // URL state if someone is updating a UI really fast, like typing
-            // in a live search box for instance.
-            this.debounceManager.runWithDebounce(
-              this.urlPushDebounceLength,
-              "pushStateToURL",
-              this.URLManager.pushStateToURL.bind(this.URLManager),
-              {
-                current,
-                filters,
-                resultsPerPage,
-                searchTerm,
-                sortDirection,
-                sortField,
-                sortList
-              },
-              { replaceUrl }
-            );
-          }
-        },
-        (error) => {
-          if (error.message === INVALID_CREDENTIALS) {
-            // The connector should have invalidated the credentials in its state by now
-            // Getting the latest state from the connector
-            this._setState({
-              ...(this.apiConnector?.state && { ...this.apiConnector.state })
-            });
-            // Stop execution of request
-            // and let the consuming application handle the missing credentials
-            return;
-          }
-
-          this._setState({
-            error: `An unexpected error occurred: ${error.message}`
-          });
-        }
-      );
-    }
+    this.rawMakeSearchRequest
   );
 
   private _setState(newState: Partial<SearchState>) {
