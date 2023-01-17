@@ -14,7 +14,7 @@ export function fieldResponseMapper(
       return {
         ...acc,
         [key]: {
-          ...(fields[key] ? { raw: fields[key] } : {}),
+          ...(typeof fields[key] !== "undefined" ? { raw: fields[key] } : {}),
           ...(highlights[key] ? { snippet: highlights[key] } : {})
         }
       };
