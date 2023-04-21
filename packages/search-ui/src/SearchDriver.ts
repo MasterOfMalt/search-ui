@@ -49,7 +49,7 @@ export const DEFAULT_STATE: SearchState = {
   // Search Parameters -- This is state that represents the input state.
   current: 1,
   filters: [],
-  resultsPerPage: 20,
+  resultsPerPage: 25,
   searchTerm: "",
   sortDirection: "" as SortDirection,
   sortField: "",
